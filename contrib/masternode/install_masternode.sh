@@ -104,7 +104,7 @@ function stopDaemon {
 clearBuffer
 
 # Server IP address
-publicIP=$(ip addr | grep 'state UP' -A2 | tail -n1 | awk '{print $2}' | cut -f1  -d'/')
+publicIP=$(dig +short myip.opendns.com @resolver1.opendns.com)
 if [[ -n $publicIP && $publicIP =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]; then
     echo -e "${GREEN}IP address was detected: ${publicIP}${NC}"
 else
@@ -276,23 +276,43 @@ sudo mkdir -p /home/masternode/.galactrum
 sudo touch /home/masternode/.galactrum/galactrum.conf
 sudo chown -R masternode:masternode /home/masternode/.galactrum
 
+# Setup systemd service
+echo && echo "Creating Galactrum service..."
+sleep 3
+sudo touch /etc/systemd/system/galactrumd.service
+echo '[Unit]
+Description=galactrumd
+After=network.target
+
+[Service]
+Type=simple
+User=masternode
+WorkingDirectory=/home/masternode
+ExecStart=/usr/local/bin/galactrumd -conf=/home/masternode/.galactrum/galactrum.conf -datadir=/home/masternode/.galactrum
+ExecStop=/usr/local/bin/galactrum-cli -conf=/home/masternode/.galactrum/galactrum.conf -datadir=/home/masternode/.galactrum stop
+Restart=on-abort
+
+[Install]
+WantedBy=multi-user.target
+' | sudo -E tee /etc/systemd/system/galactrumd.service
+echo -e "${GREEN}Gallactrum service completed!${NC}"
+
 # Create config for Galactrum
 echo && echo -e "Configuring Galactrum v${WALLET_VERSION}..."
-sleep 3
 # Generate random user and password
 rpcuser=`cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1`
 rpcpassword=`cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1`
-
 echo 'rpcuser='$rpcuser'
 rpcpassword='$rpcpassword'' > /home/masternode/.galactrum/galactrum.conf
 
+sleep 3
 # If private key is needed, start wallet and generate one
 if [[ $privKeyBool == "y" || $privKeyBool == "Y" || $privKeyBool == "" ]]; then
     key=""
     echo -e "${YELLOW}Generating masternode private key...${NC}"
-    galactrumd -conf=/home/masternode/.galactrum/galactrum.conf -datadir=/home/masternode/.galactrum -daemon
+    sudo systemctl start galactrumd.service
     echo "Wallet is loading..."
-    sleep 5
+    sleep 10
     key=$( galactrum-cli -conf=/home/masternode/.galactrum/galactrum.conf -datadir=/home/masternode/.galactrum masternode genkey )
     if [[ -z $key ]]; then
         echo -e "${YELLOW}Wallet is still loading. Trying again in 10 seconds...${NC}"
@@ -317,7 +337,10 @@ if [[ $privKeyBool == "y" || $privKeyBool == "Y" || $privKeyBool == "" ]]; then
     clearBuffer
 fi
 
-stopDaemon
+sudo systemctl stop galactrumd.service
+stopDaemon # Extra check
+sleep 3
+
 echo 'rpcallowip=127.0.0.1
 listen=1
 server=1
@@ -329,30 +352,9 @@ masternode=1
 masternodeprivkey='$key'' >> /home/masternode/.galactrum/galactrum.conf
 echo -e "${GREEN}Gallactrum configuration completed!${NC}"
 
-# Setup systemd service
-echo && echo "Creating Galactrum service..."
-sleep 3
-sudo touch /etc/systemd/system/galactrumd.service
-echo '[Unit]
-Description=galactrumd
-After=network.target
-
-[Service]
-Type=simple
-User=masternode
-WorkingDirectory=/home/masternode
-ExecStart=/usr/local/bin/galactrumd -conf=/home/masternode/.galactrum/galactrum.conf -datadir=/home/masternode/.galactrum
-ExecStop=/usr/local/bin/galactrum-cli -conf=/home/masternode/.galactrum/galactrum.conf -datadir=/home/masternode/.galactrum stop
-Restart=on-abort
-
-[Install]
-WantedBy=multi-user.target
-' | sudo -E tee /etc/systemd/system/galactrumd.service
-echo -e "${GREEN}Gallactrum service completed!${NC}"
-
 echo && echo "Starting Galactrum Daemon..."
-sudo systemctl enable galactrumd
-galactrumd -conf=/home/masternode/.galactrum/galactrum.conf -datadir=/home/masternode/.galactrum -daemon
+sudo systemctl enable galactrumd.service
+sudo systemctl start galactrumd.service
 echo -e "${GREEN}Daemon has been started!${NC}"
 
 # Add alias to run galactrum-cli
@@ -377,7 +379,6 @@ cd ~
 
 sleep 5
 clear
-
 echo -e "********************************************************************
 ${GREEN}Masternode setup completed!${NC}
 ********************************************************************
@@ -393,6 +394,7 @@ Note: You can copy the above line by selecting it, then pressing Ctrl+Insert.
       You can paste the line in your masternode.conf by pressing Shift+Insert.
 \nOnce added to the masternode.conf file, restart the wallet.
 ********************************************************************"
+clearBuffer
 read -p "Press Enter to continue..." -s
 
 while sleep 1; do
