@@ -19,12 +19,18 @@ P2P_PORT=6270
 if [[ $(lsb_release -d) == *16.04* ]]; then
     UBUNTU_RELEASE=16
     WALLET_FOLDER="galactrum-1.1.6"
-    WALLET_ZIP="galactrum-1.1.6-linux64.tar.gz"
-    WALLET_LINK="https://github.com/galactrum/galactrum/releases/download/v${WALLET_VERSION}/${WALLET_ZIP}"
+    WALLET_ZIP="galactrum-1.1.6-ubuntu16-linux64.tar.gz"
+    WALLET_LINK="https://github.com/GAB5TER/galactrum/releases/download/v${WALLET_VERSION}/${WALLET_ZIP}"
+elif [[ $(lsb_release -d) == *18.04* ]]; then
+    UBUNTU_RELEASE=18
+    WALLET_FOLDER="galactrum-1.1.6"
+    WALLET_ZIP="galactrum-1.1.6-ubuntu18-linux64.tar.gz"
+    WALLET_LINK="https://github.com/GAB5TER/galactrum/releases/download/v${WALLET_VERSION}/${WALLET_ZIP}"
 else
     echo -e "${RED}No wallet binaries have been generated for this Ubuntu release! Exiting...${NC}"
     exit 1
 fi
+#TODO Update links above
 
 # Check that the processor is 64 bit
 if [[ $(getconf LONG_BIT) != 64 ]]; then
@@ -35,6 +41,7 @@ fi
 # Check for systemd
 systemctl --version >/dev/null 2>&1 || { echo "${RED}Program systemd could not be found. Exiting...${NC}"  >&2; exit 1; }
 
+# System checks complete, proceed with install
 echo -e "${GREEN}"
 echo "                                                                    "
 echo "                                                                    "
@@ -295,7 +302,7 @@ Restart=on-abort
 [Install]
 WantedBy=multi-user.target
 ' | sudo -E tee /etc/systemd/system/galactrumd.service
-echo -e "${GREEN}Gallactrum service completed!${NC}"
+echo -e "${GREEN}Gallactrum service created!${NC}"
 
 # Create config for Galactrum
 echo && echo -e "Configuring Galactrum v${WALLET_VERSION}..."
@@ -335,12 +342,11 @@ if [[ $privKeyBool == "y" || $privKeyBool == "Y" || $privKeyBool == "" ]]; then
     fi
     echo -e "${GREEN}Masternode private key generated!${NC}"
     clearBuffer
+    sudo systemctl stop galactrumd.service
+    stopDaemon # Extra check
 fi
 
-sudo systemctl stop galactrumd.service
-stopDaemon # Extra check
 sleep 3
-
 echo 'rpcallowip=127.0.0.1
 listen=1
 server=1
@@ -377,7 +383,7 @@ echo "galactrum_conf=/home/masternode/.galactrum/galactrum.conf" >> /home/master
 echo -e "${GREEN}Sentinel has been installed and configured!${NC}"
 cd ~
 
-sleep 5
+sleep 3
 clear
 echo -e "********************************************************************
 ${GREEN}Masternode setup completed!${NC}
@@ -385,13 +391,13 @@ ${GREEN}Masternode setup completed!${NC}
 Masternode VPS IP address: ${GREEN}$publicIP${NC}
 Masternode private key: ${GREEN}$key${NC}
 \nPlease add the following line to your local masternode.conf file:
-${YELLOW}ALIAS${NC} $publicIP:$P2P_PORT $key ${YELLOW}TXID VOUT${NC}
+${YELLOW}ALIAS${NC} ${GREEN}$publicIP:$P2P_PORT${NC} ${GREEN}$key${NC} ${YELLOW}TXID VOUT${NC}
 \nWhere:\n${YELLOW}ALIAS${NC}: The name you want to give your masternode
 ${YELLOW}TXID${NC}: The transaction ID of the 1,000 ORE collateral
 ${YELLOW}VOUT${NC}: The transaction index of the 1,000 ORE collateral
 \nYou can get TXID and VOUT by doing ${GREEN}masternode outputs${NC} in the local wallet console
-Note: You can copy the above line by selecting it, then pressing Ctrl+Insert.
-      You can paste the line in your masternode.conf by pressing Shift+Insert.
+Note: You can copy the above line by selecting it, then pressing Ctrl-Insert.
+      You can paste the line in your masternode.conf by pressing Shift-Insert.
 \nOnce added to the masternode.conf file, restart the wallet.
 ********************************************************************"
 clearBuffer
@@ -407,16 +413,6 @@ if [[ $( galactrum-cli -conf=/home/masternode/.galactrum/galactrum.conf -datadir
     IsMasternodeListSynced=true
 else
     IsMasternodeListSynced=false
-fi
-if [[ $( galactrum-cli -conf=/home/masternode/.galactrum/galactrum.conf -datadir=/home/masternode/.galactrum mnsync status | grep "IsWinnersListSynced" ) = *true* ]]; then
-    IsWinnersListSynced=true
-else
-    IsWinnersListSynced=false
-fi
-if [[ $( galactrum-cli -conf=/home/masternode/.galactrum/galactrum.conf -datadir=/home/masternode/.galactrum mnsync status | grep "IsSynced" ) = *true* ]]; then
-    IsSynced=true
-else
-    IsSynced=false
 fi
 if [[ $( galactrum-cli -conf=/home/masternode/.galactrum/galactrum.conf -datadir=/home/masternode/.galactrum mnsync status | grep "IsFailed" ) = *true* ]]; then
     IsFailed=true
@@ -440,16 +436,6 @@ if [[ "$IsMasternodeListSynced" = true ]]; then
     echo -e "IsMasternodeListSynced: ${GREEN}true${NC}"
 else
     echo -e "IsMasternodeListSynced: ${YELLOW}false${NC}"
-fi
-if [[ "$IsWinnersListSynced" = true ]]; then
-    echo -e "IsWinnersListSynced: ${GREEN}true${NC}"
-else
-    echo -e "IsWinnersListSynced: ${YELLOW}false${NC}"
-fi
-if [[ "$IsSynced" = true ]]; then
-    echo -e "IsSynced: ${GREEN}true${NC}"
-else
-    echo -e "IsSynced: ${YELLOW}false${NC}"
 fi
 if [[ "$IsFailed" = true ]]; then
     echo -e "IsFailed: ${YELLOW}true${NC}"
