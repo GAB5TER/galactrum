@@ -230,9 +230,8 @@ fi
 # Update system 
 echo && echo "Updating system..."
 sleep 3
-sudo DEBIAN_FRONTEND=noninteractive
 sudo apt-get -y update
-sudo apt-get -o DPkg::Options::="--force-confdef" -y upgrade
+sudo DEBIAN_FRONTEND=noninteractive apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" dist-upgrade
 echo -e "${GREEN}System update completed!${NC}"
 
 # Add Berkely PPA
