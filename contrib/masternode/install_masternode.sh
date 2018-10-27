@@ -323,17 +323,17 @@ if [[ $privKeyBool == "y" || $privKeyBool == "Y" || $privKeyBool == "" ]]; then
     key=$( galactrum-cli -conf=/home/masternode/.galactrum/galactrum.conf -datadir=/home/masternode/.galactrum masternode genkey )
     if [[ -z $key ]]; then
         echo -e "${YELLOW}Wallet is still loading. Trying again in 10 seconds...${NC}"
-        sleep 10
+        sleep 15
         key=$( galactrum-cli -conf=/home/masternode/.galactrum/galactrum.conf -datadir=/home/masternode/.galactrum masternode genkey )
     fi
     if [[ -z $key ]]; then
         echo -e "${YELLOW}Wallet is still loading. Trying again in 10 seconds...${NC}"
-        sleep 10
+        sleep 20
         key=$( galactrum-cli -conf=/home/masternode/.galactrum/galactrum.conf -datadir=/home/masternode/.galactrum masternode genkey )
     fi
     if [[ -z $key ]]; then
         echo -e "${YELLOW}Wallet is still loading. Trying again in 10 seconds...${NC}"
-        sleep 10
+        sleep 25
         key=$( galactrum-cli -conf=/home/masternode/.galactrum/galactrum.conf -datadir=/home/masternode/.galactrum masternode genkey )
     fi
     if [[ -z $key ]]; then
