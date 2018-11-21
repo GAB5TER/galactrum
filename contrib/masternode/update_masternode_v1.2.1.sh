@@ -27,6 +27,11 @@ sudo systemctl start galactrumd
 echo && echo "Installing Sentinel..."
 rm -rf /home/masternode/sentinel
 git clone https://github.com/galactrum/sentinel /home/masternode/sentinel
+cd /home/masternode/sentinel
+virtualenv venv
+. venv/bin/activate
+pip install -r requirements.txt
+./venv/bin/py.test ./test
 echo -e "${GREEN}Sentinel has been installed and configured!${NC}"
 
 while sleep 1; do
