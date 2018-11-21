@@ -11,25 +11,13 @@ BLUE='\033[0;34m'
 NC='\033[0m'
 
 # Define Galactrum variables
-WALLET_VERSION="1.1.6"
 RPC_PORT=6269
 P2P_PORT=6270
+WALLET_VERSION="1.2.1"
+WALLET_FOLDER="galactrum-${WALLET_VERSION}"
+WALLET_ZIP="galactrum-${WALLET_VERSION}-linux64.tar.gz"
+WALLET_LINK="https://github.com/galactrum/galactrum/releases/download/v${WALLET_VERSION}/${WALLET_ZIP}"
 
-# Determine Ubuntu release version
-if [[ $(lsb_release -d) == *16.04* ]]; then
-    UBUNTU_RELEASE=16
-    WALLET_FOLDER="galactrum-1.1.6"
-    WALLET_ZIP="galactrum-1.1.6-ubuntu16-linux64.tar.gz"
-    WALLET_LINK="https://github.com/GAB5TER/galactrum/releases/download/v${WALLET_VERSION}/${WALLET_ZIP}"
-elif [[ $(lsb_release -d) == *18.04* ]]; then
-    UBUNTU_RELEASE=18
-    WALLET_FOLDER="galactrum-1.1.6"
-    WALLET_ZIP="galactrum-1.1.6-ubuntu18-linux64.tar.gz"
-    WALLET_LINK="https://github.com/GAB5TER/galactrum/releases/download/v${WALLET_VERSION}/${WALLET_ZIP}"
-else
-    echo -e "${RED}No wallet binaries have been generated for this Ubuntu release! Exiting...${NC}"
-    exit 1
-fi
 #TODO Update links above
 
 # Check that the processor is 64 bit
@@ -261,7 +249,7 @@ sudo apt-get -y install \
 echo -e "${GREEN}Base packages installation completed!${NC}"
 
 # Download Galactrum
-echo && echo -e "Downloading Galactrum v${WALLET_VERSION} for Ubuntu${UBUNTU_RELEASE}..."
+echo && echo -e "Downloading Galactrum v${WALLET_VERSION}..."
 sleep 3
 wget ${WALLET_LINK}
 tar -xvf ${WALLET_ZIP}
