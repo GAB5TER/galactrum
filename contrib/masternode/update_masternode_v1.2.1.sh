@@ -26,7 +26,7 @@ sudo systemctl start galactrumd
 
 echo && echo "Installing Sentinel..."
 rm -rf /home/masternode/sentinel
-git clone https://github.com/galactrum/sentinel /home/masternode/ORE/sentinel
+git clone https://github.com/galactrum/sentinel /home/masternode/sentinel
 echo -e "${GREEN}Sentinel has been installed and configured!${NC}"
 
 while sleep 1; do
